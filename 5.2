@@ -1,0 +1,48 @@
+import tkinter as tk
+from tkinter import Scale
+import RPi.GPIO as GPIO
+from time import sleep
+
+# Pin numbers for LEDs
+led_pins = [12, 16, 18]
+
+# Disable warnings about GPIO pins being already in use
+GPIO.setwarnings(False)
+
+# Set GPIO mode and setup LED pins
+GPIO.setmode(GPIO.BOARD)
+for pin in led_pins:
+    GPIO.setup(pin, GPIO.OUT)
+
+# Create and start PWM instances for each LED
+pwm_leds = {}
+for pin in led_pins:
+    pwm_leds[pin] = GPIO.PWM(pin, 100)
+    pwm_leds[pin].start(0)
+
+def update_brightness(pin, value):
+    duty_cycle = int(value)
+    pwm_leds[pin].ChangeDutyCycle(duty_cycle)
+
+# Define GUI window
+root = tk.Tk()
+root.title("LED Brightness Control")
+
+# Create and pack slider widgets for each LED
+sliders = {}
+for pin in led_pins:
+    label = tk.Label(root, text=f"LED on pin {pin}")
+    label.pack()
+    slider = Scale(root, from_=0, to=100, orient=tk.HORIZONTAL, command=lambda value, pin=pin: update_brightness(pin, value), length=300)
+    slider.pack()
+    sliders[pin] = slider
+
+try:
+    root.mainloop()
+except KeyboardInterrupt:
+    pass
+
+# Clean up GPIO
+for pwm in pwm_leds.values():
+    pwm.stop()
+GPIO.cleanup()
